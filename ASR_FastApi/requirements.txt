@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+onnxruntime
+numpy
+soundfile
+nemo_toolkit[asr]
+torch
+omegaconf

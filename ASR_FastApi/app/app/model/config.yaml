@@ -1,0 +1,303 @@
+sample_rate: 16000
+log_prediction: true
+ctc_reduction: mean_batch
+train_ds:
+  manifest_filepath: /code/03_manifest/ulca-train-v3.json
+  sample_rate: 16000
+  batch_size: 64
+  shuffle: true
+  num_workers: 8
+  pin_memory: true
+  use_start_end_token: false
+  trim_silence: false
+  max_duration: 16.7
+  min_duration: 0.1
+validation_ds:
+  manifest_filepath: /code/manifest/ulca-eval.json
+  sample_rate: 16000
+  batch_size: 4
+  shuffle: false
+  num_workers: 8
+  pin_memory: true
+  use_start_end_token: false
+test_ds:
+  manifest_filepath: /code/manifest/ulca-eval.json
+  sample_rate: 16000
+  batch_size: 4
+  shuffle: false
+  num_workers: 8
+  pin_memory: true
+  use_start_end_token: false
+tokenizer:
+  dir: /code/03_tokenizer/tokenizer_spe_unigram_v128
+  type: bpe
+  model_path: nemo:15d73b415eae4871890712c03f0d9e44_tokenizer.model
+  vocab_path: nemo:f55895ee3c804dcf983b25aa94f5743b_vocab.txt
+  spe_tokenizer_vocab: nemo:93a63c108f9445c89d8ed6f30a99a016_tokenizer.vocab
+preprocessor:
+  _target_: nemo.collections.asr.modules.AudioToMelSpectrogramPreprocessor
+  sample_rate: 16000
+  normalize: per_feature
+  window_size: 0.025
+  window_stride: 0.01
+  window: hann
+  features: 80
+  n_fft: 512
+  log: true
+  frame_splicing: 1
+  dither: 1.0e-05
+  pad_to: 0
+  pad_value: 0.0
+spec_augment:
+  _target_: nemo.collections.asr.modules.SpectrogramAugmentation
+  freq_masks: 2
+  time_masks: 5
+  freq_width: 27
+  time_width: 0.05
+encoder:
+  _target_: nemo.collections.asr.modules.ConformerEncoder
+  feat_in: 80
+  feat_out: -1
+  n_layers: 18
+  d_model: 256
+  subsampling: striding
+  subsampling_factor: 4
+  subsampling_conv_channels: -1
+  ff_expansion_factor: 4
+  self_attention_model: rel_pos
+  n_heads: 4
+  att_context_size:
+  - -1
+  - -1
+  xscaling: true
+  untie_biases: true
+  pos_emb_max_len: 5000
+  conv_kernel_size: 31
+  dropout: 0.1
+  dropout_emb: 0.0
+  dropout_att: 0.1
+decoder:
+  _target_: nemo.collections.asr.modules.ConvASRDecoder
+  feat_in: 256
+  num_classes: 128
+  vocabulary:
+  - <unk>
+  - ा
+  - र
+  - ी
+  - ▁
+  - े
+  - न
+  - ि
+  - त
+  - क
+  - ्
+  - ल
+  - म
+  - स
+  - ं
+  - ▁स
+  - ह
+  - ो
+  - ु
+  - द
+  - य
+  - प
+  - ▁है
+  - ▁के
+  - ग
+  - ▁ब
+  - ▁म
+  - व
+  - ▁क
+  - ▁में
+  - ट
+  - ▁अ
+  - ज
+  - ▁द
+  - ▁प
+  - ▁आ
+  - ्र
+  - ू
+  - ▁ज
+  - ▁की
+  - ▁र
+  - ध
+  - र्
+  - ों
+  - ख
+  - ▁का
+  - ्य
+  - च
+  - ए
+  - ब
+  - भ
+  - ने
+  - ▁को
+  - ▁से
+  - ▁ल
+  - ▁और
+  - ▁प्र
+  - ▁त
+  - ▁कर
+  - ▁व
+  - ता
+  - श
+  - ▁कि
+  - ▁ह
+  - ▁न
+  - ▁ग
+  - ना
+  - ▁हो
+  - ै
+  - ▁पर
+  - थ
+  - ▁उ
+  - ड
+  - ▁च
+  - िक
+  - ण
+  - ई
+  - ▁हैं
+  - िया
+  - ▁इस
+  - फ
+  - ▁वि
+  - वा
+  - ▁जा
+  - ष
+  - ित
+  - ▁श
+  - ें
+  - ▁ने
+  - ेश
+  - ते
+  - इ
+  - ▁भी
+  - का
+  - ▁एक
+  - ्या
+  - ▁हम
+  - ▁सं
+  - िल
+  - ंग
+  - ड़
+  - छ
+  - क्ष
+  - ौ
+  - ठ
+  - ़
+  - ॉ
+  - ओ
+  - ढ
+  - घ
+  - आ
+  - झ
+  - ऐ
+  - ँ
+  - ऊ
+  - उ
+  - ः
+  - औ
+  - ','
+  - ऍ
+  - ॅ
+  - ॠ
+  - ऋ
+  - ऑ
+  - ञ
+  - ृ
+  - अ
+  - ङ
+optim:
+  name: adamw
+  lr: 5.0
+  betas:
+  - 0.9
+  - 0.98
+  weight_decay: 0.001
+  sched:
+    name: NoamAnnealing
+    d_model: 256
+    warmup_steps: 15000
+    warmup_ratio: null
+    min_lr: 1.0e-06
+target: nemo.collections.asr.models.ctc_bpe_models.EncDecCTCModelBPE
+nemo_version: 1.8.0rc0
+decoding:
+  strategy: greedy_batch
+  preserve_alignments: null
+  compute_timestamps: null
+  word_seperator: ' '
+  segment_seperators:
+  - .
+  - '!'
+  - '?'
+  segment_gap_threshold: null
+  ctc_timestamp_type: all
+  batch_dim_index: 0
+  greedy:
+    preserve_alignments: false
+    compute_timestamps: false
+    preserve_frame_confidence: false
+    confidence_method_cfg:
+      name: entropy
+      entropy_type: tsallis
+      alpha: 0.33
+      entropy_norm: exp
+      temperature: DEPRECATED
+  beam:
+    beam_size: 4
+    search_type: default
+    preserve_alignments: false
+    compute_timestamps: false
+    return_best_hypothesis: true
+    beam_alpha: 1.0
+    beam_beta: 0.0
+    kenlm_path: null
+    flashlight_cfg:
+      lexicon_path: null
+      boost_path: null
+      beam_size_token: 16
+      beam_threshold: 20.0
+      unk_weight: -.inf
+      sil_weight: 0.0
+    pyctcdecode_cfg:
+      beam_prune_logp: -10.0
+      token_min_logp: -5.0
+      prune_history: false
+      hotwords: null
+      hotword_weight: 10.0
+  wfst:
+    beam_size: 4
+    search_type: riva
+    return_best_hypothesis: true
+    preserve_alignments: false
+    compute_timestamps: false
+    decoding_mode: nbest
+    open_vocabulary_decoding: false
+    beam_width: 10.0
+    lm_weight: 1.0
+    device: cuda
+    arpa_lm_path: null
+    wfst_lm_path: null
+    riva_decoding_cfg: {}
+    k2_decoding_cfg:
+      search_beam: 20.0
+      output_beam: 10.0
+      min_active_states: 30
+      max_active_states: 10000
+  confidence_cfg:
+    preserve_frame_confidence: false
+    preserve_token_confidence: false
+    preserve_word_confidence: false
+    exclude_blank: true
+    aggregation: min
+    tdt_include_duration: false
+    method_cfg:
+      name: entropy
+      entropy_type: tsallis
+      alpha: 0.33
+      entropy_norm: exp
+      temperature: DEPRECATED
+  temperature: 1.0
